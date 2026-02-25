@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E.ON – ELDP Preiskalkulator</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Segoe UI',system-ui,sans-serif; background:#f0f2f6; color:#1a1a2e; min-height:100vh; }
+
+.top-bar { background:linear-gradient(135deg,#e2001a,#9b0014); padding:22px 32px; display:flex; align-items:center; justify-content:space-between; }
+.top-bar h1 { color:#fff; font-size:20px; font-weight:700; }
+.top-bar .sub { color:rgba(255,255,255,.7); font-size:12px; margin-top:3px; }
+.logo { font-size:28px; font-weight:800; color:#fff; letter-spacing:-1px; }
+.logo span { opacity:.5; font-weight:300; }
+
+.container { max-width:980px; margin:28px auto; padding:0 20px 40px; display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+
+.card { background:#fff; border-radius:14px; padding:24px; box-shadow:0 2px 12px rgba(0,0,0,.07); }
+.card.full { grid-column:1/-1; }
+.card h2 { font-size:12px; text-transform:uppercase; letter-spacing:.8px; color:#888; font-weight:600; margin-bottom:16px; }
+
+.user-display { text-align:center; margin-bottom:16px; }
+.user-num { font-size:56px; font-weight:800; color:#e2001a; line-height:1; }
+.user-label { font-size:13px; color:#999; margin-top:4px; }
+input[type=range] { width:100%; accent-color:#e2001a; cursor:pointer; }
+.slider-labels { display:flex; justify-content:space-between; font-size:11px; color:#bbb; margin-top:6px; }
+.min-note { text-align:center; margin-top:10px; font-size:11px; background:#fff3f3; color:#c0392b; padding:5px 10px; border-radius:6px; display:block; width:100%; }
+
+.venue-list { display:flex; flex-direction:column; gap:8px; }
+.venue-row { border:1.5px solid #eee; border-radius:10px; overflow:hidden; transition:border-color .15s; }
+.venue-row.active { border-color:#e2001a; }
+.venue-header { display:flex; align-items:center; gap:10px; padding:10px 12px; cursor:pointer; user-select:none; background:#fff; transition:background .15s; }
+.venue-row.active .venue-header { background:#fff8f8; }
+.venue-check { width:18px; height:18px; border-radius:4px; background:#eee; border:1.5px solid #ddd; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all .15s; }
+.venue-row.active .venue-check { background:#e2001a; border-color:#e2001a; }
+.venue-check svg { display:none; }
+.venue-row.active .venue-check svg { display:block; }
+.venue-name { font-size:13px; font-weight:500; flex:1; }
+.venue-unitfee { font-size:12px; color:#aaa; }
+.venue-sub { display:none; padding:10px 12px 12px 40px; border-top:1px solid #fde8e8; background:#fffafa; }
+.venue-row.active .venue-sub { display:flex; align-items:center; gap:10px; }
+.venue-sub label { font-size:12px; color:#888; white-space:nowrap; }
+.venue-sub input[type=number] { width:80px; padding:5px 8px; border:1.5px solid #e0e0e0; border-radius:7px; font-size:14px; font-weight:600; color:#1a1a2e; text-align:center; outline:none; transition:border-color .15s; }
+.venue-sub input[type=number]:focus { border-color:#e2001a; }
+.venue-sub .venue-subtotal { margin-left:auto; font-size:13px; font-weight:700; color:#e2001a; }
+
+.result-card { background:linear-gradient(135deg,#1a1a2e,#2d2d4e); border-radius:14px; padding:28px; grid-column:1/-1; color:#fff; }
+.result-card h2 { color:rgba(255,255,255,.5); }
+.result-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:20px; }
+.res-box { background:rgba(255,255,255,.07); border-radius:10px; padding:16px; text-align:center; }
+.res-box .lbl { font-size:11px; color:rgba(255,255,255,.45); text-transform:uppercase; letter-spacing:.6px; margin-bottom:8px; }
+.res-box .val { font-size:26px; font-weight:800; color:#fff; }
+.res-box .sub { font-size:11px; color:rgba(255,255,255,.35); margin-top:4px; }
+.res-box.highlight .val { color:#ff6b6b; }
+.tier-info { margin-top:16px; display:flex; align-items:center; gap:10px; background:rgba(255,255,255,.06); border-radius:10px; padding:12px 16px; }
+.tier-badge-box { background:#e2001a; color:#fff; font-size:11px; font-weight:700; padding:4px 10px; border-radius:6px; white-space:nowrap; }
+.tier-desc { font-size:12px; color:rgba(255,255,255,.5); }
+.breakdown { margin-top:20px; border-top:1px solid rgba(255,255,255,.1); padding-top:16px; }
+.bk-section { margin-bottom:10px; }
+.bk-section-title { font-size:10px; text-transform:uppercase; letter-spacing:.6px; color:rgba(255,255,255,.3); margin-bottom:6px; }
+.bk-row { display:flex; justify-content:space-between; font-size:13px; padding:5px 0; border-bottom:1px solid rgba(255,255,255,.05); }
+.bk-label { color:rgba(255,255,255,.55); }
+.bk-val { color:#fff; font-weight:600; }
+.bk-total-row { display:flex; justify-content:space-between; font-size:14px; font-weight:700; padding:10px 0 0; border-top:1px solid rgba(255,255,255,.15); margin-top:4px; }
+.bk-total-row .bk-label { color:rgba(255,255,255,.7); }
+.bk-total-row .bk-val { color:#ff6b6b; }
+.empty-note { text-align:center; padding:16px; color:rgba(255,255,255,.3); font-size:13px; font-style:italic; }
+.loading { text-align:center; padding:40px; color:#999; font-size:14px; }
+
+@media(max-width:680px){
+  .container { grid-template-columns:1fr; }
+  .card.full,.result-card { grid-column:1; }
+  .result-grid { grid-template-columns:1fr 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div>
+    <div class="logo">E.<span>ON</span></div>
+    <div class="sub">e*star Live Data Portal – Preiskalkulator</div>
+  </div>
+  <h1>ELDP Kalkulator</h1>
+</div>
+
+<div id="app">
+  <div class="loading">⏳ Preise werden geladen…</div>
+</div>
+
+<script>
+function fmt(n){ return '€\u00a0' + Math.round(n).toLocaleString('de-DE'); }
+
+function calcScreenFee(n, pricing){
+  const fr = pricing.flatrate;
+  let total = Math.min(n, fr.users) * fr.fee_per_user;
+  for(let i = fr.users + 1; i <= n; i++){
+    const b = pricing.screen_bands.find(b => i >= b.from && i <= b.to);
+    if(b) total += b.fee;
+  }
+  return total;
+}
+
+function getTier(n){
+  if(n<=50)  return {label:'Tier 1', desc:'15 – 50 User (Mindestcommitment erfüllt)'};
+  if(n<=200) return {label:'Tier 2', desc:'51 – 200 User'};
+  return            {label:'Tier 3', desc:'201+ User'};
+}
+
+function buildApp(pricing){
+  const state = { totalUsers: pricing.min_users, venues:{} };
+
+  document.getElementById('app').innerHTML = `
+  <div class="container">
+    <div class="card">
+      <h2>Gesamtanzahl User (Web-Screen)</h2>
+      <div class="user-display">
+        <div class="user-num" id="userNum">${pricing.min_users}</div>
+        <div class="user-label">lizenzierte User gesamt</div>
+      </div>
+      <input type="range" id="userSlider" min="${pricing.min_users}" max="100" value="${pricing.min_users}" step="1">
+      <div class="slider-labels"><span>${pricing.min_users}</span><span>30</span><span>50</span><span>75</span><span>100</span></div>
+      <span class="min-note">⚠ Mindest-Commitment: ${pricing.min_users} User · Flatrate-Paket: ${pricing.flatrate.users} User × ${fmt(pricing.flatrate.fee_per_user)}</span>
+    </div>
+    <div class="card">
+      <h2>Venue-Auswahl &amp; User pro Venue</h2>
+      <div class="venue-list" id="venueList"></div>
+    </div>
+    <div class="result-card full">
+      <h2>Kalkulationsergebnis</h2>
+      <div class="result-grid">
+        <div class="res-box">
+          <div class="lbl">ELDP License Fee / Jahr</div>
+          <div class="val" id="resScreen">–</div>
+          <div class="sub" id="resScreenSub">–</div>
+        </div>
+        <div class="res-box">
+          <div class="lbl">Venue Fees / Jahr</div>
+          <div class="val" id="resVenue">–</div>
+          <div class="sub" id="resVenueSub">–</div>
+        </div>
+        <div class="res-box highlight">
+          <div class="lbl">Gesamtjahrespreis</div>
+          <div class="val" id="resTotal">–</div>
+          <div class="sub" id="resTotalMonth">– / Monat</div>
+        </div>
+      </div>
+      <div class="tier-info">
+        <div class="tier-badge-box" id="tierBadge">–</div>
+        <div class="tier-desc" id="tierDesc">–</div>
+      </div>
+      <div class="breakdown" id="breakdown">
+        <div class="empty-note">Bitte Venues auswählen und User-Anzahl pro Venue eingeben.</div>
+      </div>
+    </div>
+  </div>`;
+
+  // Build venue list
+  const list = document.getElementById('venueList');
+  pricing.venues.forEach(v => {
+    state.venues[v.id] = {active:false, users:0};
+    const row = document.createElement('div');
+    row.className = 'venue-row';
+    row.id = 'row_'+v.id;
+    row.innerHTML = `
+      <div class="venue-header">
+        <div class="venue-check">
+          <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+            <path d="M1 4L3.5 6.5L9 1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <span class="venue-name">${v.name}</span>
+        <span class="venue-unitfee">${v.fee.toLocaleString('de-DE')} € / User / Jahr</span>
+      </div>
+      <div class="venue-sub">
+        <label>Anzahl User für ${v.name}:</label>
+        <input type="number" id="inp_${v.id}" min="0" max="500" value="0">
+        <span class="venue-subtotal" id="sub_${v.id}">–</span>
+      </div>`;
+    row.querySelector('.venue-header').addEventListener('click', () => {
+      const s = state.venues[v.id];
+      s.active = !s.active;
+      row.classList.toggle('active', s.active);
+      if(s.active && s.users === 0){
+        const inp = document.getElementById('inp_'+v.id);
+        inp.value = state.totalUsers;
+        s.users = state.totalUsers;
+      }
+      render();
+    });
+    row.querySelector('input[type=number]').addEventListener('input', e => {
+      const val = Math.max(0, parseInt(e.target.value)||0);
+      e.target.value = val;
+      state.venues[v.id].users = val;
+      render();
+    });
+    list.appendChild(row);
+  });
+
+  // Slider
+  document.getElementById('userSlider').addEventListener('input', e => {
+    state.totalUsers = parseInt(e.target.value);
+    document.getElementById('userNum').textContent = state.totalUsers;
+    render();
+  });
+
+  function render(){
+    const n = state.totalUsers;
+    const screenFee = calcScreenFee(n, pricing);
+    let venueFeeTotal = 0, activeVenues = 0;
+    pricing.venues.forEach(v => {
+      if(state.venues[v.id]?.active){
+        const vu = state.venues[v.id].users || 0;
+        venueFeeTotal += v.fee * vu;
+        if(vu > 0) activeVenues++;
+      }
+      const sub = document.getElementById('sub_'+v.id);
+      if(sub && state.venues[v.id]?.active){
+        const vu = state.venues[v.id].users || 0;
+        sub.textContent = vu > 0 ? fmt(v.fee * vu) + ' / Jahr' : '–';
+      }
+    });
+    const total = screenFee + venueFeeTotal;
+    const tier = getTier(n);
+    document.getElementById('resScreen').textContent = fmt(screenFee);
+    document.getElementById('resScreenSub').textContent = n <= pricing.flatrate.users
+      ? `Flatrate-Paket (${n} von ${pricing.flatrate.users} User)`
+      : `Flatrate (${pricing.flatrate.users}) + Staffel (${n - pricing.flatrate.users} User)`;
+    document.getElementById('resVenue').textContent = fmt(venueFeeTotal);
+    document.getElementById('resVenueSub').textContent = activeVenues + ' Venue' + (activeVenues!==1?'s':'') + ' aktiv';
+    document.getElementById('resTotal').textContent = fmt(total);
+    document.getElementById('resTotalMonth').textContent = fmt(total/12) + ' / Monat';
+    document.getElementById('tierBadge').textContent = tier.label;
+    document.getElementById('tierDesc').textContent = tier.desc;
+
+    const activeList = pricing.venues.filter(v => state.venues[v.id]?.active);
+    const bd = document.getElementById('breakdown');
+    if(!activeList.length){ bd.innerHTML='<div class="empty-note">Bitte Venues auswählen und User-Anzahl pro Venue eingeben.</div>'; return; }
+
+    let html = '<div class="bk-section"><div class="bk-section-title">ELDP License Fee</div>';
+    html += `<div class="bk-row"><span class="bk-label">Flatrate-Paket (${Math.min(n,pricing.flatrate.users)} User × ${fmt(pricing.flatrate.fee_per_user)})</span><span class="bk-val">${fmt(Math.min(n,pricing.flatrate.users)*pricing.flatrate.fee_per_user)}</span></div>`;
+    if(n > pricing.flatrate.users){
+      const extra = calcScreenFee(n, pricing) - pricing.flatrate.users * pricing.flatrate.fee_per_user;
+      html += `<div class="bk-row"><span class="bk-label">Staffel User ${pricing.flatrate.users+1}–${n} (gestaffelt)</span><span class="bk-val">${fmt(extra)}</span></div>`;
+    }
+    html += '</div><div class="bk-section"><div class="bk-section-title">Venue Fees</div>';
+    activeList.forEach(v => {
+      const vu = state.venues[v.id]?.users || 0;
+      html += `<div class="bk-row"><span class="bk-label">${v.name}: ${vu} User × ${v.fee.toLocaleString('de-DE')} €</span><span class="bk-val">${vu>0?fmt(v.fee*vu):'–'}</span></div>`;
+    });
+    html += `</div><div class="bk-total-row"><span class="bk-label">Gesamtjahrespreis (netto, zzgl. MwSt.)</span><span class="bk-val">${fmt(total)}</span></div>`;
+    bd.innerHTML = html;
+  }
+
+  render();
+}
+
+// Load pricing from preise.json
+fetch('preise.json')
+  .then(r => r.json())
+  .then(buildApp)
+  .catch(() => {
+    // Fallback: use inline pricing if fetch fails (e.g. local file open)
+    buildApp({
+      "min_users": 15,
+      "flatrate": { "users": 15, "fee_per_user": 1200 },
+      "screen_bands": [
+        {"from":16,"to":20,"fee":642},
+        {"from":21,"to":999,"fee":321}
+      ],
+      "venues": [
+        {"id":"marex",   "name":"Marex",       "fee":508},
+        {"id":"tfs",     "name":"TFS",          "fee":610},
+        {"id":"bgc",     "name":"BGC",          "fee":546},
+        {"id":"gfi",     "name":"GFI",          "fee":546},
+        {"id":"tp",      "name":"TP",           "fee":679},
+        {"id":"icap",    "name":"ICAP",         "fee":679},
+        {"id":"griffin", "name":"Griffin",      "fee":589},
+        {"id":"eex",     "name":"EEX",          "fee":728},
+        {"id":"icefut",  "name":"ICE Futures",  "fee":1824}
+      ]
+    });
+  });
+</script>
+</body>
+</html>

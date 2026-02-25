@@ -1,0 +1,25 @@
+{
+  "min_users": 15,
+
+  "flatrate": {
+    "users": 15,
+    "fee_per_user": 1200
+  },
+
+  "screen_bands": [
+    { "from": 16, "to": 20,  "fee": 642 },
+    { "from": 21, "to": 999, "fee": 321 }
+  ],
+
+  "venues": [
+    { "id": "marex",   "name": "Marex",       "fee": 508  },
+    { "id": "tfs",     "name": "TFS",         "fee": 610  },
+    { "id": "bgc",     "name": "BGC",         "fee": 546  },
+    { "id": "gfi",     "name": "GFI",         "fee": 546  },
+    { "id": "tp",      "name": "TP",          "fee": 679  },
+    { "id": "icap",    "name": "ICAP",        "fee": 679  },
+    { "id": "griffin", "name": "Griffin",     "fee": 589  },
+    { "id": "eex",     "name": "EEX",         "fee": 728  },
+    { "id": "icefut",  "name": "ICE Futures", "fee": 1824 }
+  ]
+}
