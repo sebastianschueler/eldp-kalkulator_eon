@@ -103,47 +103,47 @@ function calcScreenFee(n, pricing){
 }
 
 function getTier(n){
-  if(n<=50)  return {label:'Tier 1', desc:'15 – 50 User (Mindestcommitment erfüllt)'};
-  if(n<=200) return {label:'Tier 2', desc:'51 – 200 User'};
-  return            {label:'Tier 3', desc:'201+ User'};
+  if(n<=50)  return {label:'Tier 1', desc:'15 – 50 users (minimum commitment met)'};
+  if(n<=200) return {label:'Tier 2', desc:'51 – 200 users'};
+  return            {label:'Tier 3', desc:'201+ users'};
 }
 
 function buildApp(pricing){
   const state = { totalUsers: pricing.min_users, venues:{} };
 
-  document.getElementById('app').innerHTML = `
+      document.getElementById('app').innerHTML = `
   <div class="container">
     <div class="card">
-      <h2>Gesamtanzahl User (Web-Screen)</h2>
+      <h2>Total Number of Users (Web Screen)</h2>
       <div class="user-display">
         <div class="user-num" id="userNum">${pricing.min_users}</div>
-        <div class="user-label">lizenzierte User gesamt</div>
+        <div class="user-label">total licensed users</div>
       </div>
       <input type="range" id="userSlider" min="${pricing.min_users}" max="100" value="${pricing.min_users}" step="1">
       <div class="slider-labels"><span>${pricing.min_users}</span><span>30</span><span>50</span><span>75</span><span>100</span></div>
-      <span class="min-note">⚠ Mindest-Commitment: ${pricing.min_users} User · Flatrate-Paket: ${pricing.flatrate.users} User × ${fmt(pricing.flatrate.fee_per_user)}</span>
+      <span class="min-note">⚠ Minimum commitment: ${pricing.min_users} users · Flat rate package: ${pricing.flatrate.users} users × ${fmt(pricing.flatrate.fee_per_user)}</span>
     </div>
     <div class="card">
-      <h2>Venue-Auswahl &amp; User pro Venue</h2>
+      <h2>Venue Selection &amp; Users per Venue <span style="font-weight:400;color:#bbb;font-size:11px">(multiple selection possible)</span></h2>
       <div class="venue-list" id="venueList"></div>
     </div>
     <div class="result-card full">
-      <h2>Kalkulationsergebnis</h2>
+      <h2>Calculation Result</h2>
       <div class="result-grid">
         <div class="res-box">
-          <div class="lbl">ELDP License Fee / Jahr</div>
+          <div class="lbl">ELDP License Fee / Year</div>
           <div class="val" id="resScreen">–</div>
           <div class="sub" id="resScreenSub">–</div>
         </div>
         <div class="res-box">
-          <div class="lbl">Venue Fees / Jahr</div>
+          <div class="lbl">Venue Fees / Year</div>
           <div class="val" id="resVenue">–</div>
           <div class="sub" id="resVenueSub">–</div>
         </div>
         <div class="res-box highlight">
-          <div class="lbl">Gesamtjahrespreis</div>
+          <div class="lbl">Total Annual Price</div>
           <div class="val" id="resTotal">–</div>
-          <div class="sub" id="resTotalMonth">– / Monat</div>
+          <div class="sub" id="resTotalMonth">– / month</div>
         </div>
       </div>
       <div class="tier-info">
@@ -151,7 +151,7 @@ function buildApp(pricing){
         <div class="tier-desc" id="tierDesc">–</div>
       </div>
       <div class="breakdown" id="breakdown">
-        <div class="empty-note">Bitte Venues auswählen und User-Anzahl pro Venue eingeben.</div>
+        <div class="empty-note">Please select venues and enter the number of users per venue.</div>
       </div>
     </div>
   </div>`;
@@ -174,7 +174,7 @@ function buildApp(pricing){
         <span class="venue-unitfee">${v.fee.toLocaleString('de-DE')} € / User / Jahr</span>
       </div>
       <div class="venue-sub">
-        <label>Anzahl User für ${v.name}:</label>
+        <label>No. of users for ${v.name}:</label>
         <input type="number" id="inp_${v.id}" min="0" max="500" value="0">
         <span class="venue-subtotal" id="sub_${v.id}">–</span>
       </div>`;
@@ -236,20 +236,20 @@ function buildApp(pricing){
 
     const activeList = pricing.venues.filter(v => state.venues[v.id]?.active);
     const bd = document.getElementById('breakdown');
-    if(!activeList.length){ bd.innerHTML='<div class="empty-note">Bitte Venues auswählen und User-Anzahl pro Venue eingeben.</div>'; return; }
+    if(!activeList.length){ bd.innerHTML='<div class="empty-note">Please select venues and enter the number of users per venue.</div>'; return; }
 
     let html = '<div class="bk-section"><div class="bk-section-title">ELDP License Fee</div>';
-    html += `<div class="bk-row"><span class="bk-label">Flatrate-Paket (${Math.min(n,pricing.flatrate.users)} User × ${fmt(pricing.flatrate.fee_per_user)})</span><span class="bk-val">${fmt(Math.min(n,pricing.flatrate.users)*pricing.flatrate.fee_per_user)}</span></div>`;
+    html += `<div class="bk-row"><span class="bk-label">Flat rate package (${Math.min(n,pricing.flatrate.users)} users × ${fmt(pricing.flatrate.fee_per_user)})</span><span class="bk-val">${fmt(Math.min(n,pricing.flatrate.users)*pricing.flatrate.fee_per_user)}</span></div>`;
     if(n > pricing.flatrate.users){
       const extra = calcScreenFee(n, pricing) - pricing.flatrate.users * pricing.flatrate.fee_per_user;
-      html += `<div class="bk-row"><span class="bk-label">Staffel User ${pricing.flatrate.users+1}–${n} (gestaffelt)</span><span class="bk-val">${fmt(extra)}</span></div>`;
+      html += `<div class="bk-row"><span class="bk-label">Tiered users ${pricing.flatrate.users+1}–${n}</span><span class="bk-val">${fmt(extra)}</span></div>`;
     }
     html += '</div><div class="bk-section"><div class="bk-section-title">Venue Fees</div>';
     activeList.forEach(v => {
       const vu = state.venues[v.id]?.users || 0;
-      html += `<div class="bk-row"><span class="bk-label">${v.name}: ${vu} User × ${v.fee.toLocaleString('de-DE')} €</span><span class="bk-val">${vu>0?fmt(v.fee*vu):'–'}</span></div>`;
+      html += `<div class="bk-row"><span class="bk-label">${v.name}: ${vu} users × ${v.fee.toLocaleString('de-DE')} €</span><span class="bk-val">${vu>0?fmt(v.fee*vu):'–'}</span></div>`;
     });
-    html += `</div><div class="bk-total-row"><span class="bk-label">Gesamtjahrespreis (netto, zzgl. MwSt.)</span><span class="bk-val">${fmt(total)}</span></div>`;
+    html += `</div><div class="bk-total-row"><span class="bk-label">Total annual price (net, excl. VAT)</span><span class="bk-val">${fmt(total)}</span></div>`;
     bd.innerHTML = html;
   }
 
